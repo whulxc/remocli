@@ -1,0 +1,32 @@
+{
+  "listen": {
+    "host": "127.0.0.1",
+    "port": 8080
+  },
+  "auth": {
+    "pin": "123456",
+    "sessionSecret": "replace-with-a-long-random-string",
+    "trustedProxyHeader": "tailscale-user-login",
+    "secureCookies": false
+  },
+  "publicBaseUrl": "https://remocli.your-tailnet.ts.net",
+  "mobileDeepLinkBase": "remoteconnect://open",
+  "auditLogPath": "data/gateway/audit.log",
+  "lockTtlMs": 900000,
+  "pollIntervalMs": 3000,
+  "streamIntervalMs": 1500,
+  "notifications": {
+    "gotify": {
+      "baseUrl": "",
+      "token": ""
+    }
+  },
+  "agents": [
+    {
+      "id": "ubuntu-codex-a",
+      "label": "Ubuntu Codex A",
+      "baseUrl": "http://127.0.0.1:9101",
+      "token": "replace-with-the-agent-token"
+    }
+  ]
+}

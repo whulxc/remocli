@@ -1,0 +1,74 @@
+{
+  "workspace": {
+    "defaultWslRepoPath": "/home/user/code/remocli"
+  },
+  "gateway": {
+    "distro": "Ubuntu",
+    "listenHost": "127.0.0.1",
+    "listenPort": 8080,
+    "pin": "replace-with-a-strong-pin",
+    "sessionSecret": "replace-with-a-long-random-string",
+    "trustedProxyHeader": "tailscale-user-login",
+    "secureCookies": true,
+    "localLoginEnabled": true,
+    "browserLoginEnabled": true,
+    "allowedEmails": [],
+    "accessTokenTtlMs": 2592000000,
+    "refreshTokenTtlMs": 2592000000,
+    "browserGrantTtlMs": 300000,
+    "deviceStorePath": "data/gateway/devices.json",
+    "publicBaseUrl": "https://remocli.your-tailnet.ts.net",
+    "mobileDeepLinkBase": "remoteconnect://open",
+    "windows": {
+      "powerShellAdminWrapper": "gsudo.exe"
+    },
+    "auditLogPath": "data/gateway/audit.log",
+    "lockTtlMs": 900000,
+    "pollIntervalMs": 3000,
+    "streamIntervalMs": 1500
+  },
+  "tailscale": {
+    "servePort": 443
+  },
+  "gotify": {
+    "baseUrl": "http://127.0.0.1:18080",
+    "token": "replace-with-gotify-application-token",
+    "service": {
+      "binaryPath": "tools/gotify/bin/gotify-linux-amd64",
+      "listenHost": "127.0.0.1",
+      "listenPort": 18080,
+      "dataDir": "tools/gotify/data",
+      "adminUser": "admin",
+      "adminPass": "replace-with-a-random-password",
+      "applicationName": "RemoCLI"
+    }
+  },
+  "agents": [
+    {
+      "id": "ubuntu-codex-a",
+      "label": "Ubuntu Codex A",
+      "distro": "Ubuntu",
+      "port": 9101,
+      "token": "replace-with-agent-token-a",
+      "workspacesRoot": "/home/user/code",
+      "projectRoots": [
+        "/home/user/code"
+      ],
+      "defaultCommand": "bash -il",
+      "sessionPrefix": "codex-a-"
+    },
+    {
+      "id": "ubuntu-codex-b",
+      "label": "Ubuntu Codex B",
+      "distro": "Ubuntu-22.04",
+      "port": 9102,
+      "token": "replace-with-agent-token-b",
+      "workspacesRoot": "/home/user/code",
+      "projectRoots": [
+        "/home/user/code"
+      ],
+      "defaultCommand": "bash -il",
+      "sessionPrefix": "codex-b-"
+    }
+  ]
+}

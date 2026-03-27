@@ -1,0 +1,33 @@
+{
+  "listen": {
+    "host": "127.0.0.1",
+    "port": 9101
+  },
+  "token": "replace-with-the-agent-token",
+  "sessionPrefix": "codex-",
+  "defaultCommand": "codex",
+  "dataDir": "data/agent",
+  "workspacesRoot": "data/agent/workspaces",
+  "artifactsRoot": "data/agent/artifacts",
+  "snapshotLines": 220,
+  "detailSnapshotLines": 3000,
+  "patterns": {
+    "attentionPatterns": [
+      "approve",
+      "confirm",
+      "waiting for user",
+      "press enter",
+      "continue\\?"
+    ],
+    "completionPatterns": [
+      "task completed",
+      "done",
+      "finished"
+    ],
+    "errorPatterns": [
+      "error:",
+      "traceback",
+      "failed"
+    ]
+  }
+}

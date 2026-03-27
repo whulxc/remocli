@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+  <TextView
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:text="@string/gateway_dialog_mode_title"
+      android:textColor="@color/text_primary"
+      android:textSize="14sp"
+      android:textStyle="bold" />
+
+  <RadioGroup
+      android:id="@+id/gateway_mode_group"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="8dp"
+      android:orientation="vertical">
+
+    <RadioButton
+        android:id="@+id/gateway_mode_usb"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/gateway_mode_usb" />
+
+    <RadioButton
+        android:id="@+id/gateway_mode_lan"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/gateway_mode_lan" />
+
+    <RadioButton
+        android:id="@+id/gateway_mode_public_custom"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/gateway_mode_public_custom" />
+
+    <RadioButton
+        android:id="@+id/gateway_mode_public_team"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/gateway_mode_public_team" />
+  </RadioGroup>
+
+  <com.google.android.material.textfield.TextInputLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="12dp"
+      android:hint="@string/gateway_dialog_entry_hint"
+      app:helperText="@string/gateway_dialog_helper">
+
+    <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/gateway_input"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="textUri"
+        android:maxLines="1" />
+  </com.google.android.material.textfield.TextInputLayout>
+
+  <com.google.android.material.textfield.TextInputLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="12dp"
+      android:hint="@string/gateway_dialog_api_hint"
+      app:helperText="@string/gateway_dialog_api_helper">
+
+    <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/gateway_api_input"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="textUri"
+        android:maxLines="1" />
+  </com.google.android.material.textfield.TextInputLayout>
+
+</LinearLayout>

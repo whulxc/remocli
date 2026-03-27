@@ -1,0 +1,75 @@
+{
+  "workspace": {
+    "defaultWslRepoPath": "/home/user/code/remocli"
+  },
+  "namedTunnel": {
+    "enabled": true,
+    "label": "remocli-home",
+    "protocol": "http2",
+    "tokenEnvVar": "CLOUDFLARED_TUNNEL_TOKEN",
+    "tokenFilePath": "data/private/remocli-home.token"
+  },
+  "lanDirect": {
+    "enabled": false,
+    "listenAddress": "0.0.0.0",
+    "listenPort": 18080,
+    "connectAddress": "127.0.0.1",
+    "connectPort": 8080,
+    "firewallRemoteAddress": "LocalSubnet"
+  },
+  "gateway": {
+    "distro": "Ubuntu",
+    "listenHost": "127.0.0.1",
+    "listenPort": 8080,
+    "pin": "replace-with-a-strong-fallback-pin",
+    "sessionSecret": "replace-with-a-long-random-string",
+    "trustedProxyHeader": "cf-access-authenticated-user-email",
+    "secureCookies": true,
+    "localLoginEnabled": false,
+    "browserLoginEnabled": true,
+    "allowedEmails": [
+      "you@example.com"
+    ],
+    "accessTokenTtlMs": 2592000000,
+    "refreshTokenTtlMs": 2592000000,
+    "browserGrantTtlMs": 300000,
+    "deviceStorePath": "data/gateway/devices.json",
+    "publicBaseUrl": "https://remocli.example.com",
+    "mobileDeepLinkBase": "remoteconnect://open",
+    "windows": {
+      "powerShellAdminWrapper": "gsudo.exe"
+    },
+    "auditLogPath": "data/gateway/audit.log",
+    "lockTtlMs": 900000,
+    "pollIntervalMs": 3000,
+    "streamIntervalMs": 1500
+  },
+  "gotify": {
+    "baseUrl": "http://127.0.0.1:18080",
+    "token": "replace-with-gotify-application-token",
+    "service": {
+      "binaryPath": "tools/gotify/bin/gotify-linux-amd64",
+      "listenHost": "127.0.0.1",
+      "listenPort": 18080,
+      "dataDir": "tools/gotify/data",
+      "adminUser": "admin",
+      "adminPass": "replace-with-a-random-password",
+      "applicationName": "RemoCLI"
+    }
+  },
+  "agents": [
+    {
+      "id": "ubuntu-codex-a",
+      "label": "Ubuntu Codex A",
+      "distro": "Ubuntu",
+      "port": 9101,
+      "token": "replace-with-agent-token-a",
+      "workspacesRoot": "/home/user/code",
+      "projectRoots": [
+        "/home/user/code"
+      ],
+      "defaultCommand": "bash -il",
+      "sessionPrefix": "codex-a-"
+    }
+  ]
+}

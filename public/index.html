@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="color-scheme" content="light" />
+    <title>RemoCLI</title>
+    <link rel="stylesheet" href="/styles.css?v=202603271046" />
+    <link rel="stylesheet" href="/assets/app.css?v=202603271046" />
+  </head>
+  <body data-view="login">
+    <main class="shell">
+      <section id="login-view" class="auth-screen">
+        <div class="auth-card auth-card--login">
+          <div class="auth-badge">RemoCLI</div>
+          <h1>连接会话</h1>
+          <p class="lede">无论是公网、局域网还是 USB 入口，最终都需要网关 PIN；正式公网入口通常还会先经过浏览器身份认证，预览入口则会直接要求 PIN。</p>
+          <section class="auth-panel">
+            <div class="auth-panel__label">当前站点</div>
+            <div id="gateway-summary" class="auth-panel__value">检测中…</div>
+            <div id="login-mode-summary" class="auth-panel__hint" hidden></div>
+          </section>
+          <form id="login-form" class="stack">
+            <label id="pin-field" hidden>
+              <span>PIN</span>
+              <input
+                id="pin"
+                name="pin"
+                type="password"
+                autocomplete="current-password"
+                inputmode="text"
+                autocapitalize="none"
+                spellcheck="false"
+              />
+            </label>
+
+            <p id="login-status" class="form-note" hidden></p>
+            <button id="login-action-button" type="submit" hidden>继续</button>
+          </form>
+        </div>
+      </section>
+
+      <section id="app-view" class="app-shell" hidden>
+        <header class="app-header">
+          <button id="mobile-back-button" class="icon-button icon-button--subtle" type="button" aria-label="返回会话列表" hidden>
+            <span class="icon icon--back" aria-hidden="true"></span>
+          </button>
+          <div class="app-header__copy">
+            <div id="header-title" class="app-title">会话列表</div>
+            <div id="user-summary" class="app-subtitle app-subtitle--header" hidden></div>
+          </div>
+          <div class="header-actions">
+            <button id="settings-toggle" class="icon-button" type="button" aria-label="设置">
+              <span class="icon icon--sliders" aria-hidden="true"></span>
+            </button>
+          </div>
+        </header>
+
+        <div id="session-alert-popups" class="session-alert-popups" hidden></div>
+
+        <section class="app-layout">
+          <aside class="session-pane panel">
+            <div class="project-system-row">
+              <span class="project-system-row__label">运行系统</span>
+              <div class="project-system-row__value">
+                <span id="project-agent-display" class="project-system-value" hidden></span>
+                <select id="project-agent-select" hidden></select>
+              </div>
+            </div>
+
+            <div class="project-toolbar">
+              <div class="project-toolbar__label">工程目录</div>
+              <div class="project-toolbar__actions">
+                <button id="new-session-toggle" class="icon-button" type="button" aria-label="新建会话">
+                  <span class="icon icon--plus" aria-hidden="true"></span>
+                </button>
+                <button id="delete-mode-toggle" class="icon-button" type="button" aria-label="删除部分会话">
+                  <span class="icon icon--trash" aria-hidden="true"></span>
+                </button>
+              </div>
+            </div>
+
+            <label class="project-field project-field--path">
+              <div class="project-field__row">
+                <input
+                  id="project-path-input"
+                  type="text"
+                  placeholder="/workspace/your-project"
+                  autocomplete="off"
+                />
+                <button id="apply-project-path-button" type="button">进入</button>
+              </div>
+            </label>
+
+            <div id="project-picker" class="project-picker" hidden></div>
+
+            <div class="pane-header pane-header--compact">
+              <div>
+                <div class="pane-title">工程内会话</div>
+                <div id="connection-banner" class="banner" hidden>空闲</div>
+              </div>
+              <button id="refresh-button" class="ghost-button compact-button" type="button" hidden>刷新</button>
+            </div>
+
+            <p id="project-path-hint" class="form-note">先输入工程目录，或点输入框选择要进入的子目录。</p>
+
+            <div id="selection-toolbar" class="selection-toolbar" hidden>
+              <strong id="selection-summary">已选 0 项</strong>
+              <div class="selection-toolbar__actions">
+                <button id="delete-selected-button" class="danger-button" type="button">删除所选</button>
+                <button id="cancel-selection-button" class="ghost-button" type="button">取消</button>
+              </div>
+            </div>
+
+            <div id="session-list" class="session-list"></div>
+          </aside>
+
+          <section class="detail-pane">
+            <div class="panel detail-card">
+              <div class="detail-header">
+                <div>
+                  <div class="eyebrow">当前会话</div>
+                  <h2 id="session-title">请选择一个会话</h2>
+                  <p id="session-meta" class="session-meta">先在左侧选择工程目录，再打开一个会话。</p>
+                  <p id="session-runtime-meta" class="session-runtime-meta" hidden></p>
+                </div>
+
+                <div class="detail-actions">
+                  <span id="status-pill" class="badge badge--idle">空闲</span>
+                  <button id="acquire-button" type="button" hidden>接管</button>
+                  <button id="release-button" class="ghost-button" type="button" hidden>只读</button>
+                  <button id="open-local-button" class="ghost-button" type="button">在电脑打开</button>
+                </div>
+              </div>
+
+              <div id="chat-thread" class="chat-thread"></div>
+
+              <div id="raw-terminal-panel" class="raw-terminal-panel" hidden>
+                <div id="terminal" class="terminal terminal--fallback"></div>
+              </div>
+
+              <form id="send-form" class="composer composer--chat">
+                <div class="composer__editor">
+                  <div class="composer__meta">
+                    <div id="editor-prompt" class="editor-prompt" hidden></div>
+                    <div id="editor-note" class="editor-note">命令会以聊天消息的形式发送给当前会话。</div>
+                  </div>
+                  <div id="composer-attachments" class="composer-attachments" hidden></div>
+                  <input id="image-input" type="file" accept="image/*" hidden />
+                  <label id="send-input-wrap" class="composer__textarea-wrap" for="send-input">
+                    <textarea
+                      id="send-input"
+                      rows="1"
+                      placeholder="输入命令后发送"
+                      enterkeyhint="send"
+                      autocomplete="off"
+                      autocapitalize="none"
+                      spellcheck="false"
+                    ></textarea>
+                  </label>
+                </div>
+                <div class="composer__actions">
+                  <button id="apply-button" class="ghost-button" type="button">图片</button>
+                  <button id="ctrlc-button" class="ghost-button" type="button">中断</button>
+                  <button id="enter-button" type="submit">发送</button>
+                </div>
+              </form>
+            </div>
+          </section>
+        </section>
+
+        <div id="sheet-backdrop" class="sheet-backdrop" hidden></div>
+
+        <section id="compose-sheet" class="sheet" hidden>
+          <div class="sheet-card">
+            <div class="sheet-header">
+              <div>
+                <div class="pane-title">会话操作</div>
+                <p class="sheet-subtitle">当前工程目录下，可以接入已有 tmux，也可以新建一个 tmux。</p>
+              </div>
+              <button id="close-compose-sheet" class="icon-button" type="button" aria-label="关闭">
+                <span class="icon icon--close" aria-hidden="true"></span>
+              </button>
+            </div>
+
+            <div class="segmented-tabs">
+              <button id="compose-existing-tab" class="segmented-tabs__button" type="button" data-active="true">开启原有会话</button>
+              <button id="compose-new-tab" class="segmented-tabs__button" type="button">新建会话</button>
+            </div>
+
+            <section id="compose-existing-panel" class="stack">
+              <p class="form-note">这里会列出当前工程目录下所有 tmux，包括你之前隐藏过的会话。</p>
+              <div id="existing-session-list" class="session-list session-list--sheet"></div>
+            </section>
+
+            <form id="session-form" class="stack" hidden>
+              <label>
+                <span>会话类型</span>
+                <select id="start-kind">
+                  <option value="wsl">WSL 终端</option>
+                  <option value="powershell">PowerShell</option>
+                </select>
+              </label>
+
+              <label>
+                <span>会话名称</span>
+                <input id="start-name" type="text" placeholder="留空则使用工程名" />
+              </label>
+
+              <div class="toggle-grid">
+                <label class="toggle-row">
+                  <input id="start-open-desktop" type="checkbox" checked />
+                  <span>在电脑上同时打开同一个 tmux 会话</span>
+                </label>
+                <label id="start-admin-row" class="toggle-row" hidden>
+                  <input id="start-admin" type="checkbox" />
+                  <span>PowerShell 管理员模式</span>
+                </label>
+              </div>
+
+              <p id="compose-note" class="form-note">普通 WSL 默认打开 bash -il。</p>
+              <button id="start-submit-button" type="submit">启动</button>
+            </form>
+          </div>
+        </section>
+
+        <section id="settings-sheet" class="sheet" hidden>
+          <div class="sheet-card">
+            <div class="sheet-header">
+              <div>
+                <div class="pane-title">设置</div>
+              </div>
+              <button id="close-settings-sheet" class="icon-button" type="button" aria-label="关闭">
+                <span class="icon icon--close" aria-hidden="true"></span>
+              </button>
+            </div>
+
+            <section id="session-settings-panel" class="stack" hidden>
+              <div class="settings-group">
+                <div class="pane-title">会话</div>
+              </div>
+
+              <div class="stack">
+                <button id="sheet-acquire-button" type="button" hidden>接管</button>
+                <button id="sheet-release-button" class="ghost-button" type="button" hidden>只读</button>
+                <button id="sheet-open-local-button" class="ghost-button" type="button">在电脑打开</button>
+                <button id="sheet-rename-session-button" class="ghost-button" type="button">重命名会话</button>
+                <button id="sheet-hide-session-button" class="ghost-button" type="button">从列表隐藏</button>
+                <button id="sheet-close-session-button" class="ghost-button danger-button" type="button">销毁 tmux</button>
+              </div>
+
+              <div class="settings-group">
+                <div class="pane-title">状态提醒</div>
+                <div class="stack">
+                  <label class="toggle-row">
+                    <input id="session-complete-enabled" type="checkbox" checked />
+                    <span>这个会话提醒</span>
+                  </label>
+                </div>
+              </div>
+            </section>
+
+            <div class="settings-group">
+              <div class="pane-title">状态提醒</div>
+              <div class="stack">
+                <label class="toggle-row">
+                  <input id="settings-complete-notify" type="checkbox" checked />
+                  <span>系统提示</span>
+                </label>
+                <label class="toggle-row">
+                  <input id="settings-complete-sound" type="checkbox" checked />
+                  <span>提示音</span>
+                </label>
+                <label class="toggle-row">
+                  <input id="settings-complete-vibrate" type="checkbox" checked />
+                  <span>振动</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="stack">
+              <button id="reload-page-button" class="ghost-button" type="button">重新加载</button>
+              <button id="open-browser-button" class="ghost-button" type="button">在浏览器打开</button>
+              <button id="logout-button" class="ghost-button danger-button" type="button">退出登录</button>
+            </div>
+
+            <p id="settings-note" class="form-note" hidden></p>
+          </div>
+        </section>
+
+      </section>
+    </main>
+
+    <script type="module" src="/assets/app.js?v=202603271046"></script>
+  </body>
+</html>
