@@ -6,6 +6,7 @@ DEPLOYMENT_CONFIG_PATH="${1:-config/deployment.local.json}"
 RUNTIME_DIR="$ROOT_DIR/data/runtime"
 PID_FILE="$RUNTIME_DIR/gotify.pid"
 LOG_FILE="$RUNTIME_DIR/gotify.log"
+ENSURE_BINARY_SCRIPT="$ROOT_DIR/scripts/wsl/ensure-gotify-binary.sh"
 
 mkdir -p "$RUNTIME_DIR"
 
@@ -86,8 +87,7 @@ ABS_BINARY_PATH="$(realpath "$ABS_BINARY_PATH")"
 mkdir -p "$ABS_DATA_DIR/images" "$ABS_DATA_DIR/plugins"
 
 if [[ ! -x "$ABS_BINARY_PATH" ]]; then
-  echo "gotify binary not executable: $ABS_BINARY_PATH" >&2
-  exit 1
+  ABS_BINARY_PATH="$("$ENSURE_BINARY_SCRIPT" "$ABS_BINARY_PATH")"
 fi
 
 touch "$LOG_FILE"

@@ -116,6 +116,8 @@ Build and install helpers:
 - `scripts/build-android-apk.sh`
 - `scripts/install-android-debug.sh`
 
+The first time you start the WSL services, RemoCLI will download `cloudflared` and `gotify` binaries into `tools/**/bin/` on demand. Those downloaded binaries are ignored by git and are not part of the open-source source tree.
+
 Build the debug APK with:
 
 ```bash
