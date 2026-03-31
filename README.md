@@ -28,6 +28,72 @@ Practical notes:
 - The Android shell app is for testing and mobile use; desktop users can also open the web UI directly.
 - This repository is not an npm package and does not provide a one-command cross-platform installer yet.
 
+## Five-minute quick start
+
+If this is your first time running RemoCLI, start with **USB local validation**. Do not start with formal public deployment unless you already have a real public hostname and a Cloudflare tunnel token.
+
+### Computer side
+
+1. Install JavaScript dependencies and build the frontend:
+
+   ```bash
+   npm install
+   npm run build
+   ```
+
+2. Copy the example configs:
+
+   ```bash
+   cp config/gateway.example.json config/gateway.local.json
+   cp config/agent.example.json config/agent.local.json
+   ```
+
+3. Edit those local files and set:
+
+   - a PIN in `config/gateway.local.json`
+   - a session secret in `config/gateway.local.json`
+   - an agent token in both files
+
+4. Start one agent and one gateway in two terminals:
+
+   ```bash
+   REMOTE_CONNECT_AGENT_CONFIG=config/agent.local.json npm run start:agent
+   ```
+
+   ```bash
+   REMOTE_CONNECT_GATEWAY_CONFIG=config/gateway.local.json npm run start:gateway
+   ```
+
+5. Verify the local web UI on the computer:
+
+   ```text
+   http://127.0.0.1:8080
+   ```
+
+### Phone side
+
+For Android USB validation:
+
+1. Enable USB debugging on the phone.
+2. Connect the phone to the Windows host by USB.
+3. Build and install the debug APK:
+
+   ```bash
+   ./scripts/build-android-apk.sh
+   ./scripts/install-android-debug.sh
+   ```
+
+4. Open the app, choose `USB direct`, tap `Verify`, and enter the PIN.
+
+If you only want to use the desktop browser, you can stop after opening `http://127.0.0.1:8080`.
+
+### Before you choose another mode
+
+- `USB direct` is the easiest first-run path.
+- `LAN direct` is for a trusted local network on the same Wi-Fi.
+- `Quick tunnel preview` is for temporary public testing.
+- `Formal public deployment` needs a real application hostname and a named Cloudflare tunnel token.
+
 ## What it includes
 
 - A `gateway` service for authentication, multi-agent aggregation, notifications, session locks, and artifact proxying
@@ -76,49 +142,6 @@ Practical notes:
    ```
 
 5. Open `http://127.0.0.1:8080` and log in with the configured PIN.
-
-## Fastest first-run path
-
-If you only want to verify the project locally on one machine:
-
-1. Install the WSL-side prerequisites:
-
-   ```bash
-   sudo apt update
-   sudo apt install -y tmux curl python3
-   node --version
-   npm --version
-   ```
-
-2. Install JavaScript dependencies:
-
-   ```bash
-   npm install
-   npm run build
-   ```
-
-3. Copy the example configs and set your own PIN, session secret, and agent token:
-
-   ```bash
-   cp config/gateway.example.json config/gateway.local.json
-   cp config/agent.example.json config/agent.local.json
-   ```
-
-4. Start the agent and gateway:
-
-   ```bash
-   REMOTE_CONNECT_AGENT_CONFIG=config/agent.local.json npm run start:agent
-   REMOTE_CONNECT_GATEWAY_CONFIG=config/gateway.local.json npm run start:gateway
-   ```
-
-5. Open `http://127.0.0.1:8080`.
-
-6. If you want to test on Android over USB:
-
-   ```bash
-   ./scripts/build-android-apk.sh
-   ./scripts/install-android-debug.sh
-   ```
 
 ## Connection modes
 
