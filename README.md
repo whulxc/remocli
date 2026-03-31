@@ -4,11 +4,15 @@ RemoCLI is a mobile-first control plane for remote `Codex CLI` sessions running 
 
 ## Screenshots
 
-The images below are privacy-safe demo views that mirror the product layout without exposing real projects, domains, or session content.
+The images below are privacy-safe mobile demo views that mirror the app layout without exposing real projects, domains, or session content.
+
+Public login view:
+
+![RemoCLI public login](docs/assets/remocli-public-login-demo.png)
 
 Session list view:
 
-![RemoCLI session list](docs/assets/remocli-session-list-demo.png)
+![RemoCLI session list](docs/assets/remocli-session-list-mobile-demo.png)
 
 Current session view:
 
