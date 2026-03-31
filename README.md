@@ -2,6 +2,32 @@
 
 RemoCLI is a mobile-first control plane for remote `Codex CLI` sessions running across one or more `WSL` distributions. It combines a Windows-side gateway, per-WSL agents, a responsive web UI, and an Android WebView shell app.
 
+## Host requirements
+
+RemoCLI is currently designed for a `Windows + WSL` host.
+
+Minimum requirements:
+
+- Windows 11 with `PowerShell`
+- at least one `WSL2` distro with:
+  - `bash`
+  - `node`
+  - `npm`
+  - `tmux`
+  - `curl`
+  - `python3`
+- Android phone testing requires:
+  - `adb` in Windows `PATH` or at `D:\software\Android\SDK\platform-tools\adb.exe`
+- Formal public deployment additionally requires:
+  - a named Cloudflare Tunnel token
+  - a real public application hostname
+
+Practical notes:
+
+- The gateway is a Node.js process that runs in WSL.
+- The Android shell app is for testing and mobile use; desktop users can also open the web UI directly.
+- This repository is not an npm package and does not provide a one-command cross-platform installer yet.
+
 ## What it includes
 
 - A `gateway` service for authentication, multi-agent aggregation, notifications, session locks, and artifact proxying
@@ -50,6 +76,49 @@ RemoCLI is a mobile-first control plane for remote `Codex CLI` sessions running 
    ```
 
 5. Open `http://127.0.0.1:8080` and log in with the configured PIN.
+
+## Fastest first-run path
+
+If you only want to verify the project locally on one machine:
+
+1. Install the WSL-side prerequisites:
+
+   ```bash
+   sudo apt update
+   sudo apt install -y tmux curl python3
+   node --version
+   npm --version
+   ```
+
+2. Install JavaScript dependencies:
+
+   ```bash
+   npm install
+   npm run build
+   ```
+
+3. Copy the example configs and set your own PIN, session secret, and agent token:
+
+   ```bash
+   cp config/gateway.example.json config/gateway.local.json
+   cp config/agent.example.json config/agent.local.json
+   ```
+
+4. Start the agent and gateway:
+
+   ```bash
+   REMOTE_CONNECT_AGENT_CONFIG=config/agent.local.json npm run start:agent
+   REMOTE_CONNECT_GATEWAY_CONFIG=config/gateway.local.json npm run start:gateway
+   ```
+
+5. Open `http://127.0.0.1:8080`.
+
+6. If you want to test on Android over USB:
+
+   ```bash
+   ./scripts/build-android-apk.sh
+   ./scripts/install-android-debug.sh
+   ```
 
 ## Connection modes
 
@@ -102,6 +171,22 @@ Read [docs/public-deployment-modes.md](docs/public-deployment-modes.md) before c
 
 For formal public mode with a named tunnel, start from `config/deployment.cloudflare-access.example.json` instead.
 
+## What is documented today
+
+The repository currently includes:
+
+- example gateway, agent, and deployment configs
+- scripts to start, stop, and inspect the gateway, agents, USB reverse watcher, LAN bridge, quick tunnel, and named tunnel
+- Android build and install helpers
+- deployment mode guidance in [docs/public-deployment-modes.md](docs/public-deployment-modes.md)
+
+The repository does not yet include:
+
+- a single one-click installer for all prerequisites
+- an interactive setup wizard
+- automatic provisioning of Cloudflare Access applications
+- automatic installation of Node.js, WSL, `tmux`, or Android SDK on a fresh machine
+
 ## Android app
 
 The Android app is a native shell around the RemoCLI web UI:
@@ -129,6 +214,54 @@ The generated APK will be copied to:
 ```text
 android/app/build/outputs/apk/debug/app-debug.apk
 downloads/remocli-debug.apk
+```
+
+## Using an AI assistant to install it
+
+Yes, another user can ask an AI coding assistant to install and configure RemoCLI, but the AI still needs a machine that already satisfies the host requirements above.
+
+What the AI can reasonably do:
+
+- inspect the repo
+- copy example configs
+- fill in local config values you provide
+- start the gateway and agent
+- build the frontend
+- build and install the Android debug APK
+- configure USB, LAN, quick tunnel, or named tunnel flows
+
+What the AI cannot do without your input:
+
+- invent your PIN, secrets, or Cloudflare tunnel token
+- create your Cloudflare Access application without your account access
+- install Windows features such as WSL if the machine does not already allow that workflow
+- approve Android-side install prompts on the phone for you
+
+Suggested prompt for AI-assisted setup:
+
+```text
+Set up this RemoCLI repository for local USB validation on my Windows + WSL machine.
+
+Constraints:
+- work in the current repo only
+- use config/*.example.json as the starting point
+- explain computer-side and phone-side steps separately
+- prefer USB local validation first
+- tell me exactly which secrets or values you need from me before continuing
+- after each change, say whether I need to refresh the web page, reopen the app, or restart the gateway or agent
+```
+
+Suggested prompt for formal public deployment:
+
+```text
+Set up this RemoCLI repository for formal public deployment behind Cloudflare Access.
+
+Constraints:
+- do not treat the Cloudflare Access team domain as the application hostname
+- use config/deployment.cloudflare-access.example.json as the starting point
+- tell me which values I must provide: public hostname, allowed emails, tunnel token, PIN, and session secret
+- explain computer-side and phone-side steps separately
+- verify gateway, then agent, then tunnel health before claiming success
 ```
 
 ## Artifact flow
