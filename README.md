@@ -2,6 +2,16 @@
 
 RemoCLI is a mobile-first control plane for remote `Codex CLI` sessions running across one or more `WSL` distributions. It combines a Windows-side gateway, per-WSL agents, a responsive web UI, and an Android WebView shell app.
 
+## Screenshots
+
+Desktop login view:
+
+![RemoCLI desktop login](docs/assets/remocli-login-desktop.png)
+
+Narrow mobile view:
+
+![RemoCLI mobile login](docs/assets/remocli-login-mobile.png)
+
 ## Host requirements
 
 RemoCLI is currently designed for a `Windows + WSL` host.
@@ -202,6 +212,7 @@ The repository currently includes:
 - scripts to start, stop, and inspect the gateway, agents, USB reverse watcher, LAN bridge, quick tunnel, and named tunnel
 - Android build and install helpers
 - deployment mode guidance in [docs/public-deployment-modes.md](docs/public-deployment-modes.md)
+- a troubleshooting guide in [docs/troubleshooting.md](docs/troubleshooting.md)
 
 The repository does not yet include:
 
