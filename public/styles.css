@@ -1155,32 +1155,53 @@ body[data-reordering="true"] .drag-handle {
 }
 
 .composer-attachment {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
-  padding: 0.45rem 0.6rem;
-  border-radius: 16px;
+  position: relative;
+  display: inline-grid;
+  gap: 0.42rem;
+  width: 84px;
+  padding: 0.45rem;
+  border-radius: 18px;
   background: var(--surface-muted);
   border: 1px solid var(--border);
   color: var(--text);
   max-width: 100%;
+  align-content: start;
 }
 
 .composer-attachment img {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
   object-fit: cover;
   background: #eef2f7;
 }
 
 .composer-attachment span {
+  display: block;
   min-width: 0;
-  font-size: 0.86rem;
+  font-size: 0.72rem;
   color: var(--muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.composer-attachment__remove {
+  position: absolute;
+  top: 0.28rem;
+  right: 0.28rem;
+  width: 1.35rem;
+  height: 1.35rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(20, 26, 38, 0.76);
+  color: #fff;
+  font-size: 0.92rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .composer textarea {

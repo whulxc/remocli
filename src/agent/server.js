@@ -467,7 +467,7 @@ app.get('/api/sessions/:sessionName/artifacts/:artifactName', async (req, res) =
 app.post('/api/sessions/:sessionName/pasted-images', async (req, res) => {
   try {
     const sessionName = await resolveTmuxSessionName(req.params.sessionName);
-    const meta = sessionStore.read(sessionName);
+    const meta = ensureSessionArtifactDir(sessionName);
     if (!meta?.artifactDir) {
       res.status(400).json({
         error: 'Session does not have an artifact directory',
@@ -494,6 +494,31 @@ app.listen(config.listen.port, config.listen.host, () => {
 
 function sanitizeName(value) {
   return `${value}`.trim().replace(/[^a-zA-Z0-9._-]+/g, '-');
+}
+
+function ensureSessionArtifactDir(sessionName) {
+  const currentMeta = sessionStore.read(sessionName);
+  const displayName = sanitizeName(currentMeta?.name || sessionName.replace(config.sessionPrefix, '') || sessionName);
+  const artifactDir = ensureDir(
+    path.resolve(config.artifactsRoot || path.join(dataDir, 'artifacts'), displayName || sessionName),
+  );
+  if (currentMeta && `${currentMeta.artifactDir || ''}`.trim()) {
+    return currentMeta;
+  }
+
+  const nextMeta = {
+    name: displayName,
+    tmuxSessionName: sessionName,
+    managed: sessionName.startsWith(config.sessionPrefix),
+    workspace: currentMeta?.workspace || '',
+    command: currentMeta?.command || config.defaultCommand || 'bash -il',
+    kind: currentMeta?.kind || inferSessionKind(config.defaultCommand || 'bash -il'),
+    createdAt: currentMeta?.createdAt || Date.now(),
+    ...currentMeta,
+    artifactDir,
+  };
+  sessionStore.save(sessionName, nextMeta);
+  return nextMeta;
 }
 
 function prefixedName(sessionName) {

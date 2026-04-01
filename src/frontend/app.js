@@ -28,6 +28,11 @@ import {
   previewFromSnapshot,
 } from '../shared/session-preview.js';
 import {
+  attachmentIdentity,
+  buildComposerSubmissionText,
+  mergeComposerAttachments,
+} from '../shared/composer-attachments.js';
+import {
   buildSessionCacheScope,
   DEFAULT_SESSION_CACHE_MAX_BYTES,
   loadConversationItemDetailCache,
@@ -373,6 +378,17 @@ elements.sendInput.addEventListener('paste', async (event) => {
       await uploadImageAttachment(file);
     }
   }
+});
+elements.composerAttachments.addEventListener('click', (event) => {
+  const target = event.target;
+  if (!(target instanceof HTMLElement)) {
+    return;
+  }
+  const removeButton = target.closest('.composer-attachment__remove');
+  if (!(removeButton instanceof HTMLButtonElement)) {
+    return;
+  }
+  removeComposerAttachment(removeButton.dataset.attachmentId || '');
 });
 elements.chatThread.addEventListener('scroll', () => {
   maybeLoadOlderSnapshotFromConversation();
@@ -2037,13 +2053,14 @@ async function submitComposer() {
   if (!state.currentSession) {
     return;
   }
-  const text = `${elements.sendInput.value || ''}`.trim();
-  if (!text) {
+  const text = `${elements.sendInput.value || ''}`;
+  const message = buildComposerSubmissionText(text, state.attachments);
+  if (!message) {
     return;
   }
   elements.enterButton.disabled = true;
   try {
-    await sendInput({ text });
+    await sendInput({ text: message });
     await sendInput({ key: 'enter' });
     elements.sendInput.value = '';
     state.attachments = [];
@@ -2193,23 +2210,33 @@ async function uploadImageAttachment(file) {
     return;
   }
 
-  state.attachments = [payload.artifact, ...state.attachments].slice(0, 4);
+  state.attachments = mergeComposerAttachments(state.attachments, [payload.artifact]);
   renderComposerAttachments();
-  insertTextAtCursor(payload.artifact.path);
 }
 
 function renderComposerAttachments() {
   elements.composerAttachments.innerHTML = '';
   elements.composerAttachments.hidden = state.attachments.length === 0;
   for (const item of state.attachments) {
+    const attachmentId = attachmentIdentity(item);
     const chip = document.createElement('div');
     chip.className = 'composer-attachment';
     chip.innerHTML = `
+      <button class="composer-attachment__remove" type="button" aria-label="移除图片" data-attachment-id="${escapeHtml(attachmentId)}">×</button>
       <img src="${item.url}" alt="${escapeHtml(item.name)}" loading="lazy" />
       <span>${escapeHtml(item.name)}</span>
     `;
     elements.composerAttachments.appendChild(chip);
   }
+}
+
+function removeComposerAttachment(attachmentId) {
+  const normalizedAttachmentId = `${attachmentId || ''}`.trim();
+  if (!normalizedAttachmentId) {
+    return;
+  }
+  state.attachments = state.attachments.filter((item) => attachmentIdentity(item) !== normalizedAttachmentId);
+  renderComposerAttachments();
 }
 
 function insertTextAtCursor(text) {

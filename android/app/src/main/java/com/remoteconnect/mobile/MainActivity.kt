@@ -2,6 +2,7 @@ package com.remoteconnect.mobile
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.graphics.Bitmap
@@ -109,7 +110,9 @@ class MainActivity : AppCompatActivity() {
   private val fileChooserLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
     val callback = fileChooserCallback
     fileChooserCallback = null
-    callback?.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(result.resultCode, result.data))
+    val uris = extractFileChooserUris(result.resultCode, result.data)
+    Log.d(TAG, "file chooser resultCode=${result.resultCode} uriCount=${uris?.size ?: 0}")
+    callback?.onReceiveValue(uris)
   }
 
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -298,10 +301,13 @@ class MainActivity : AppCompatActivity() {
         fileChooserCallback?.onReceiveValue(null)
         fileChooserCallback = filePathCallback
 
+        val allowMultiple = fileChooserParams?.mode == WebChromeClient.FileChooserParams.MODE_OPEN_MULTIPLE
         val chooserIntent = try {
-          fileChooserParams?.createIntent() ?: Intent(Intent.ACTION_GET_CONTENT).apply {
+          Intent(Intent.ACTION_GET_CONTENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = "image/*"
+            putExtra(Intent.EXTRA_ALLOW_MULTIPLE, allowMultiple)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
           }
         } catch (error: Exception) {
           Log.w(TAG, "createIntent for file chooser failed", error)
@@ -375,6 +381,30 @@ class MainActivity : AppCompatActivity() {
         }
       }
     }
+  }
+
+  private fun extractFileChooserUris(resultCode: Int, data: Intent?): Array<Uri>? {
+    if (resultCode != Activity.RESULT_OK) {
+      return null
+    }
+
+    val uris = mutableListOf<Uri>()
+    data?.data?.let { uris.add(it) }
+    val clipData = data?.clipData
+    if (clipData != null) {
+      for (index in 0 until clipData.itemCount) {
+        clipData.getItemAt(index)?.uri?.let { uri ->
+          if (!uris.contains(uri)) {
+            uris.add(uri)
+          }
+        }
+      }
+    }
+
+    if (uris.isEmpty()) {
+      return WebChromeClient.FileChooserParams.parseResult(resultCode, data)
+    }
+    return uris.toTypedArray()
   }
 
   private fun beginGatewayValidation() {
