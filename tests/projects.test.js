@@ -73,6 +73,30 @@ test('resolveSessionWorkspace accepts existing project directories inside allowe
   assert.equal(workspace, project);
 });
 
+test('resolveSessionWorkspace nests explicit named sessions under the requested project directory', () => {
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'remote-connect-nested-project-root-'));
+  const project = path.join(tempRoot, 'demo-project');
+  fs.mkdirSync(project, { recursive: true });
+
+  const workspace = resolveSessionWorkspace(
+    {
+      workspacesRoot: tempRoot,
+      projectRoots: [tempRoot],
+    },
+    tempRoot,
+    'review-run',
+    project,
+    {
+      createIfMissing: true,
+      createNamedSubdirectory: true,
+    },
+  );
+
+  assert.equal(workspace, path.join(project, 'review-run'));
+  assert.equal(fs.existsSync(workspace), true);
+  assert.equal(fs.statSync(workspace).isDirectory(), true);
+});
+
 test('resolveSessionWorkspace rejects paths outside configured roots', () => {
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'remote-connect-safe-root-'));
   const outsideRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'remote-connect-outside-root-'));

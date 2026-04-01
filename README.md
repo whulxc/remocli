@@ -320,3 +320,11 @@ Run the project checks with:
 ```bash
 npm run check
 ```
+
+Before you push open-source updates, run the repository safety check:
+
+```bash
+./scripts/check-open-source-safety.sh
+```
+
+That helper compares your current work against `origin/main`, lists changed files, flags blocked private/runtime paths, and scans the diff for common privacy or secret leaks before you publish.

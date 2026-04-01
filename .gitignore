@@ -20,3 +20,4 @@ output/
 tools/cloudflared/bin/cloudflared-linux-amd64
 tools/gotify/bin/gotify-linux-amd64
 tools/gotify/bin/gotify-linux-amd64.zip
+.open-source-safety.local.patterns

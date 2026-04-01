@@ -178,8 +178,10 @@ app.post('/api/sessions', async (req, res) => {
     const body = req.body || {};
     const requestedWorkspace = `${body.workspace || ''}`.trim();
     const inferredName = requestedWorkspace ? path.basename(requestedWorkspace.replace(/[\\/]+$/, '')) : '';
-    const name = sanitizeName(body.name || inferredName || `codex-${Date.now()}`);
+    const requestedName = `${body.name || ''}`.trim();
+    const name = sanitizeName(requestedName || inferredName || `codex-${Date.now()}`);
     const sessionName = `${config.sessionPrefix}${name}`;
+    const createNamedSubdirectory = Boolean(requestedWorkspace) && Boolean(requestedName) && name !== inferredName;
     if (await sessionExists(sessionName)) {
       res.status(409).json({
         error: `Session already exists: ${name}. Use 开启原有会话，或换一个名字。`,
@@ -191,6 +193,7 @@ app.post('/api/sessions', async (req, res) => {
     const workspace = resolveSessionWorkspace(config, workspacesRoot, name, requestedWorkspace || null, {
       createIfMissing: Boolean(body.createIfMissing),
       preferredRoot: body.workspaceRoot || '',
+      createNamedSubdirectory,
     });
     const artifactDir = ensureDir(
       path.resolve(config.artifactsRoot || path.join(dataDir, 'artifacts'), body.artifactDir || name),

@@ -474,7 +474,13 @@ app.delete('/api/sessions/:sessionId', auth.requireAuth, async (req, res) => {
 
   const { agentId, sessionName } = parseCompositeSessionId(req.params.sessionId);
   const agent = state.findAgent(agentId);
-  await agent.client.closeSession(sessionName);
+  try {
+    await agent.client.closeSession(sessionName);
+  } catch (error) {
+    if (!isUnknownAgentSessionError(error)) {
+      throw error;
+    }
+  }
   state.lockManager.release(req.params.sessionId, owner);
   state.clearCompletedUnread([req.params.sessionId]);
   auditLog.write({
@@ -523,7 +529,13 @@ app.post('/api/sessions/bulk-delete', auth.requireAuth, async (req, res) => {
   for (const session of sessions) {
     const { agentId, sessionName } = parseCompositeSessionId(session.id);
     const agent = state.findAgent(agentId);
-    await agent.client.closeSession(sessionName);
+    try {
+      await agent.client.closeSession(sessionName);
+    } catch (error) {
+      if (!isUnknownAgentSessionError(error)) {
+        throw error;
+      }
+    }
     state.lockManager.release(session.id, `${req.auth.clientId}`);
     state.clearCompletedUnread([session.id]);
     auditLog.write({
@@ -1015,4 +1027,12 @@ function extractErrorMessage(error) {
   }
 
   return error?.message || 'Unknown error';
+}
+
+function isUnknownAgentSessionError(error) {
+  if (Number(error?.statusCode || 0) !== 404) {
+    return false;
+  }
+  const text = `${error?.responseText || error?.message || ''}`;
+  return text.includes('Unknown tmux session');
 }

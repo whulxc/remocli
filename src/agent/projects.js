@@ -142,6 +142,7 @@ export function resolveSessionWorkspace(config, fallbackRoot, sessionName, reque
   const projectRoots = configuredProjectRoots(config, defaultWorkspaceRoot);
   const preferredRoot = `${options.preferredRoot || ''}`.trim();
   const createIfMissing = Boolean(options.createIfMissing);
+  const createNamedSubdirectory = Boolean(options.createNamedSubdirectory);
   const workspaceFlavor = detectWorkspaceFlavor(config, [defaultWorkspaceRoot, ...projectRoots], options.flavor);
 
   if (!requestedWorkspace) {
@@ -169,18 +170,21 @@ export function resolveSessionWorkspace(config, fallbackRoot, sessionName, reque
     throw new Error(`Workspace must live under one of: ${allowedRoots.join(', ')}`);
   }
 
-  if (!fs.existsSync(candidatePath)) {
-    if (createIfMissing) {
-      return ensureDir(candidatePath);
-    }
-    throw new Error(`Workspace does not exist: ${candidatePath}`);
+  const baseWorkspace = ensureWorkspaceDirectory(candidatePath, {
+    createIfMissing,
+  });
+  if (!createNamedSubdirectory) {
+    return baseWorkspace;
   }
 
-  if (!fs.statSync(candidatePath).isDirectory()) {
-    throw new Error(`Workspace is not a directory: ${candidatePath}`);
+  const nestedWorkspace = path.resolve(baseWorkspace, sessionName);
+  if (!allowedRoots.some((rootPath) => isWorkspaceWithinRoot(nestedWorkspace, rootPath))) {
+    throw new Error(`Workspace must live under one of: ${allowedRoots.join(', ')}`);
   }
 
-  return candidatePath;
+  return ensureWorkspaceDirectory(nestedWorkspace, {
+    createIfMissing,
+  });
 }
 
 export function normalizeRequestedWorkspace(requestedWorkspace, options = {}) {
@@ -250,6 +254,23 @@ function isDirectory(directoryPath) {
   } catch {
     return false;
   }
+}
+
+function ensureWorkspaceDirectory(directoryPath, options = {}) {
+  const createIfMissing = Boolean(options.createIfMissing);
+
+  if (!fs.existsSync(directoryPath)) {
+    if (createIfMissing) {
+      return ensureDir(directoryPath);
+    }
+    throw new Error(`Workspace does not exist: ${directoryPath}`);
+  }
+
+  if (!fs.statSync(directoryPath).isDirectory()) {
+    throw new Error(`Workspace is not a directory: ${directoryPath}`);
+  }
+
+  return directoryPath;
 }
 
 function selectAllowedRoot(candidatePath, allowedRoots) {
