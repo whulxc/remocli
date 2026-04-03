@@ -124,6 +124,26 @@ If the public hostname loads but the app data still fails, the most common root 
 - wrong trusted proxy header
 - Cloudflare Access protecting the wrong path
 
+### Formal public mode did not come back after reboot
+
+If you expect the Cloudflare-backed formal public stack to recover after a Windows reboot:
+
+1. Sign in to Windows first. The repository's startup launcher runs after user logon, not before it.
+2. Register the launcher once:
+
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File scripts/windows/register-startup-task.ps1 -DeploymentConfigPath config/deployment.cloudflare-access.local.json
+   ```
+
+3. Verify the local services again:
+
+   ```bash
+   curl -sS http://127.0.0.1:8080/health
+   node scripts/check-deployment.mjs config/deployment.cloudflare-access.local.json
+   ```
+
+4. If local health is back but the public URL still fails, inspect the named tunnel status and log.
+
 ## Common symptoms
 
 ### `Error 1033`

@@ -210,6 +210,25 @@ Read [docs/public-deployment-modes.md](docs/public-deployment-modes.md) before c
 
 For formal public mode with a named tunnel, start from `config/deployment.cloudflare-access.example.json` instead.
 
+### Auto-start formal public mode after reboot
+
+If you use the Cloudflare-backed formal public deployment on a Windows host, you can register a startup launcher that restores the local service chain after you sign in to Windows.
+
+Register it with:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/windows/register-startup-task.ps1 -DeploymentConfigPath config/deployment.cloudflare-access.local.json
+```
+
+What it restores after Windows logon:
+
+- `gateway`
+- every configured `agent`
+- `gotify` if enabled
+- the named tunnel if enabled
+
+This launcher runs **after Windows logon**, not before user sign-in. It is intended for restoring the formal public deployment stack, not for replacing the first-run setup steps above.
+
 ## What is documented today
 
 The repository currently includes:

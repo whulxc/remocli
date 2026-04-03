@@ -5,16 +5,11 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
+$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).ProviderPath
 $DeploymentPath = if ([System.IO.Path]::IsPathRooted($DeploymentConfigPath)) {
-  (Resolve-Path $DeploymentConfigPath).Path
+  (Resolve-Path $DeploymentConfigPath).ProviderPath
 } else {
-  (Resolve-Path (Join-Path $RepoRoot $DeploymentConfigPath)).Path
-}
-$Deployment = Get-Content $DeploymentPath -Raw | ConvertFrom-Json
-
-function Quote-ForCommandLineArgument($Value) {
-  return '"' + ("$Value" -replace '"', '\"') + '"'
+  (Resolve-Path (Join-Path $RepoRoot $DeploymentConfigPath)).ProviderPath
 }
 
 function Quote-ForBash($Value) {
@@ -22,27 +17,8 @@ function Quote-ForBash($Value) {
     return "''"
   }
 
-  return "'" + ("$Value" -replace "'", "'\"'\"'") + "'"
-}
-
-function Get-RepoPath($Item) {
-  if ($Item.PSObject.Properties.Name -contains "wslRepoPath" -and $Item.wslRepoPath) {
-    return $Item.wslRepoPath
-  }
-
-  return $Deployment.workspace.defaultWslRepoPath
-}
-
-function Get-NamedTunnelConfig($DeploymentConfig) {
-  if ($DeploymentConfig.PSObject.Properties.Name -notcontains "namedTunnel") {
-    return $null
-  }
-
-  if ($DeploymentConfig.namedTunnel.PSObject.Properties.Name -contains "enabled" -and -not $DeploymentConfig.namedTunnel.enabled) {
-    return $null
-  }
-
-  return $DeploymentConfig.namedTunnel
+  $SingleQuoteEscape = "'" + '"' + "'" + '"' + "'"
+  return "'" + ("$Value" -replace "'", $SingleQuoteEscape) + "'"
 }
 
 function Convert-RelativePathToWsl($RepoPath, $PathValue) {
@@ -79,7 +55,7 @@ function Convert-DrivePathToWsl($PathValue) {
   return "/mnt/$DriveLetter/$Rest"
 }
 
-function Resolve-WslPath($Distro, $RepoPath, $PathValue) {
+function Resolve-WslPath($RepoPath, $PathValue, $ExpectedDistro) {
   $TrimmedPath = "$PathValue".Trim()
   if (-not $TrimmedPath) {
     return $RepoPath.TrimEnd("/")
@@ -89,7 +65,7 @@ function Resolve-WslPath($Distro, $RepoPath, $PathValue) {
     return $TrimmedPath
   }
 
-  $UncPath = Convert-UncWslPathToWsl $Distro $TrimmedPath
+  $UncPath = Convert-UncWslPathToWsl $ExpectedDistro $TrimmedPath
   if ($UncPath) {
     return $UncPath
   }
@@ -102,100 +78,52 @@ function Resolve-WslPath($Distro, $RepoPath, $PathValue) {
   return Convert-RelativePathToWsl $RepoPath $TrimmedPath
 }
 
-function Build-StartupBashCommand($DeploymentConfig, $GatewayRepoPath, $DeploymentConfigWslPath) {
-  $Commands = @(
-    "set -euo pipefail",
-    "node scripts/generate-deployment-config.mjs $(Quote-ForBash $DeploymentConfigWslPath)"
-  )
-
-  if ($DeploymentConfig.gotify.PSObject.Properties.Name -contains "service" -and $DeploymentConfig.gotify.service) {
-    $Commands += "./scripts/wsl/start-gotify.sh $(Quote-ForBash $DeploymentConfigWslPath)"
-  }
-
-  $Commands += "./scripts/wsl/start-service.sh gateway gateway 'config/generated/gateway.generated.json'"
-
-  foreach ($Agent in $DeploymentConfig.agents) {
-    $AgentRepoPath = Get-RepoPath $Agent
-    $AgentDistro = if ($Agent.PSObject.Properties.Name -contains "distro" -and $Agent.distro) {
-      $Agent.distro
-    } else {
-      $DeploymentConfig.gateway.distro
-    }
-
-    if ($AgentDistro -ne $DeploymentConfig.gateway.distro -or $AgentRepoPath -ne $GatewayRepoPath) {
-      throw "register-startup-task.ps1 currently supports startup-task registration only when gateway and all agents share the same WSL distro and repo path."
-    }
-
-    $Commands += "./scripts/wsl/start-service.sh agent $(Quote-ForBash ("agent-" + $Agent.id)) $(Quote-ForBash ("config/generated/agent.{0}.generated.json" -f $Agent.id))"
-  }
-
-  $NamedTunnel = Get-NamedTunnelConfig $DeploymentConfig
-  if ($NamedTunnel) {
-    $TunnelLabel = if ($NamedTunnel.PSObject.Properties.Name -contains "label" -and $NamedTunnel.label) {
-      $NamedTunnel.label
-    } else {
-      "formal-tunnel"
-    }
-    $TunnelProtocol = if ($NamedTunnel.PSObject.Properties.Name -contains "protocol" -and $NamedTunnel.protocol) {
-      $NamedTunnel.protocol
-    } else {
-      "http2"
-    }
-    $TunnelTokenFilePath = if ($NamedTunnel.PSObject.Properties.Name -contains "tokenFilePath" -and $NamedTunnel.tokenFilePath) {
-      Resolve-WslPath $DeploymentConfig.gateway.distro $GatewayRepoPath $NamedTunnel.tokenFilePath
-    } else {
-      Resolve-WslPath $DeploymentConfig.gateway.distro $GatewayRepoPath ("data/private/{0}.token" -f $TunnelLabel)
-    }
-    $TunnelHealthUrl = if ($DeploymentConfig.gateway.PSObject.Properties.Name -contains "publicBaseUrl" -and $DeploymentConfig.gateway.publicBaseUrl) {
-      $DeploymentConfig.gateway.publicBaseUrl
-    } else {
-      ""
-    }
-    $Commands += "./scripts/wsl/start-named-tunnel.sh '' $(Quote-ForBash $TunnelLabel) $(Quote-ForBash $TunnelProtocol) $(Quote-ForBash $TunnelTokenFilePath) $(Quote-ForBash $TunnelHealthUrl)"
-  }
-
-  return ($Commands -join "; ")
+$Deployment = Get-Content $DeploymentPath -Raw | ConvertFrom-Json
+$GatewayDistro = $Deployment.gateway.distro
+$RepoWslPath = if ($Deployment.gateway.PSObject.Properties.Name -contains "wslRepoPath" -and $Deployment.gateway.wslRepoPath) {
+  $Deployment.gateway.wslRepoPath
+} else {
+  $Deployment.workspace.defaultWslRepoPath
 }
-
-$WindowsIdentity = [System.Security.Principal.WindowsIdentity]::GetCurrent()
-$UserName = $WindowsIdentity.Name
-$RepoWslPath = Get-RepoPath $Deployment.gateway
 
 if (-not $RepoWslPath) {
   throw "deployment.workspace.defaultWslRepoPath or deployment.gateway.wslRepoPath is required"
 }
 
-$DeploymentPathForTask = Resolve-WslPath $Deployment.gateway.distro $RepoWslPath $DeploymentConfigPath
-$StartupBashCommand = Build-StartupBashCommand $Deployment $RepoWslPath $DeploymentPathForTask
+$DeploymentPathForTask = Resolve-WslPath $RepoWslPath $DeploymentPath $GatewayDistro
+$StartupScriptPath = $RepoWslPath.TrimEnd("/") + "/scripts/wsl/start-deployment-services.sh"
+$BashCommand = "$StartupScriptPath $(Quote-ForBash $DeploymentPathForTask)"
 
-$ActionArguments = @(
-  "-d"
-  (Quote-ForCommandLineArgument $Deployment.gateway.distro)
-  "--cd"
-  (Quote-ForCommandLineArgument $RepoWslPath)
-  "bash"
-  "-lc"
-  (Quote-ForCommandLineArgument $StartupBashCommand)
-) -join " "
+$WrapperDirectory = Join-Path $env:LOCALAPPDATA "RemoCLI"
+$WrapperPath = Join-Path $WrapperDirectory "start-formal-public-mode.ps1"
+$StartupDirectory = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\Startup"
+$StartupLauncherPath = Join-Path $StartupDirectory "RemoCLI Formal Public Mode.cmd"
+New-Item -ItemType Directory -Path $WrapperDirectory -Force | Out-Null
+New-Item -ItemType Directory -Path $StartupDirectory -Force | Out-Null
 
-$Action = New-ScheduledTaskAction -Execute "wsl.exe" -Argument $ActionArguments
-$Trigger = if ($AtStartup) {
-  New-ScheduledTaskTrigger -AtStartup
-} else {
-  New-ScheduledTaskTrigger -AtLogOn -User $UserName
+$WrapperContent = @(
+  '$ErrorActionPreference = "Stop"',
+  'Set-Location "C:\"',
+  "wsl.exe -d $GatewayDistro --cd $RepoWslPath bash -lc ""$BashCommand"""
+) -join "`r`n"
+
+Set-Content -Path $WrapperPath -Value $WrapperContent -Encoding ASCII
+
+$StartupLauncherContent = @(
+  "@echo off",
+  "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ""$WrapperPath"""
+) -join "`r`n"
+
+Set-Content -Path $StartupLauncherPath -Value $StartupLauncherContent -Encoding ASCII
+
+if ($AtStartup) {
+  Write-Warning "AtStartup is not supported by the startup-folder launcher. RemoCLI will auto-start after Windows logon."
 }
-$Settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable
 
-Register-ScheduledTask `
-  -TaskName $TaskName `
-  -Action $Action `
-  -Trigger $Trigger `
-  -Settings $Settings `
-  -Description "Start RemoCLI gateway, agents, and named tunnel through WSL" `
-  -Force | Out-Null
-
-Write-Output "Registered scheduled task '$TaskName'"
-Write-Output "Trigger: $(if ($AtStartup) { 'At startup' } else { 'At logon' })"
-Write-Output "User: $UserName"
+Write-Output "Installed Windows startup launcher for '$TaskName'"
+Write-Output "Mode: Formal public deployment"
+Write-Output "Trigger: After Windows logon"
+Write-Output "Wrapper: $WrapperPath"
+Write-Output "Startup launcher: $StartupLauncherPath"
 Write-Output "Deployment config: $DeploymentPathForTask"
-Write-Output "Action: wsl.exe $ActionArguments"
+Write-Output "Action: $WrapperContent"
