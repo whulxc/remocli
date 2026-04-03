@@ -219,6 +219,16 @@ The repository currently includes:
 - Android build and install helpers
 - deployment mode guidance in [docs/public-deployment-modes.md](docs/public-deployment-modes.md)
 - a troubleshooting guide in [docs/troubleshooting.md](docs/troubleshooting.md)
+- a repo-level maintenance context in [AGENTS.md](AGENTS.md)
+- a low-token new-session template in [docs/maintenance-prompt.md](docs/maintenance-prompt.md)
+
+## Maintenance context
+
+If you are taking over this repository for troubleshooting or long-term upkeep:
+
+- read [AGENTS.md](AGENTS.md) first
+- use [docs/maintenance-prompt.md](docs/maintenance-prompt.md) as the default low-token handoff prompt for a new AI session
+- run `./scripts/check-open-source-safety.sh` before pushing any maintenance changes
 
 The repository does not yet include:
 
